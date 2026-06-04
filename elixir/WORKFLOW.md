@@ -37,6 +37,13 @@ codex:
     networkAccess: true
 ---
 
+Runtime behavior notes:
+
+- `approval_policy: never` should allow Codex workflow turns to proceed through Codex approval prompts and MCP approval/elicitation prompts, including `mcpServer/elicitation/request`.
+  If a task stalls on PR or tool prompts while this policy is active, inspect the Codex stream payload before changing task state.
+- When a task remains `In Progress` without code movement, capture the blocking payload or error and record it in the Linear workpad before forcing a state transition.
+- Use a stricter approval policy only for tickets that explicitly require human gatekeeping.
+
 You are working on a Linear ticket `{{ issue.identifier }}`
 
 {% if attempt %}
