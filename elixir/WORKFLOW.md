@@ -37,6 +37,13 @@ codex:
     networkAccess: true
 ---
 
+Runtime behavior notes:
+
+- `approval_policy: never` should allow Codex workflow turns to proceed through Codex approval prompts and MCP approval/elicitation prompts, including `mcpServer/elicitation/request`.
+  If a task stalls on PR or tool prompts while this policy is active, inspect the Codex stream payload before changing task state.
+- When a task remains `In Progress` without code movement, capture the blocking payload or error and record it in the Linear workpad before forcing a state transition.
+- Use a stricter approval policy only for tickets that explicitly require human gatekeeping.
+
 You are working on a Linear ticket `{{ issue.identifier }}`
 
 {% if attempt %}
@@ -216,25 +223,30 @@ Use this only when completion is blocked by missing required tools or missing au
     - If app-touching, run `launch-app` validation and capture/upload media via `github-pr-media` before handoff.
 6.  Re-check all acceptance criteria and close any gaps.
 7.  Before every `git push` attempt, run the required validation for your scope and confirm it passes; if it fails, address issues and rerun until green, then commit and push changes.
-8.  Attach PR URL to the issue (prefer attachment; use the workpad comment only if attachment is unavailable).
+8.  Open or update the GitHub PR as ready for review, not draft.
+    - If a PR was accidentally created as draft, immediately mark it ready for review before polling checks or moving the ticket forward.
     - Ensure the GitHub PR has label `symphony` (add it if missing).
-9.  Merge latest `origin/main` into branch, resolve conflicts, and rerun checks.
-10. Update the workpad comment with final checklist status and validation notes.
+9.  Attach PR URL to the issue (prefer attachment; use the workpad comment only if attachment is unavailable).
+10. Merge latest `origin/main` into branch, resolve conflicts, and rerun checks.
+11. Update the workpad comment with final checklist status and validation notes.
     - Mark completed plan/acceptance/validation checklist items as checked.
     - Add final handoff notes (commit + validation summary) in the same workpad comment.
     - Do not include PR URL in the workpad comment; keep PR linkage on the issue via attachment/link fields.
     - Add a short `### Confusions` section at the bottom when any part of task execution was unclear/confusing, with concise bullets.
     - Do not post any additional completion summary comment.
-11. Before moving to `Human Review`, poll PR feedback and checks:
+12. Before moving to `Human Review`, poll PR feedback and checks:
     - Read the PR `Manual QA Plan` comment (when present) and use it to sharpen UI/runtime test coverage for the current change.
+    - Trigger or wait for the automated Codex code review when the repository integration exposes one.
+    - If no Codex review appears after a reasonable polling window, document that in the workpad and continue with the rest of this gate.
     - Run the full PR feedback sweep protocol.
+    - Treat Codex review comments like any other reviewer feedback: address valid comments with code/test/docs changes, and reply with explicit justification for comments that are invalid or out of scope.
     - Confirm PR checks are passing (green) after the latest changes.
     - Confirm every required ticket-provided validation/test-plan item is explicitly marked complete in the workpad.
     - Repeat this check-address-verify loop until no outstanding comments remain and checks are fully passing.
     - Re-open and refresh the workpad before state transition so `Plan`, `Acceptance Criteria`, and `Validation` exactly match completed work.
-12. Only then move issue to `Human Review`.
+13. Only then move issue to `Human Review`.
     - Exception: if blocked by missing required non-GitHub tools/auth per the blocked-access escape hatch, move to `Human Review` with the blocker brief and explicit unblock actions.
-13. For `Todo` tickets that already had a PR attached at kickoff:
+14. For `Todo` tickets that already had a PR attached at kickoff:
     - Ensure all existing PR feedback was reviewed and resolved, including inline review comments (code changes or explicit, justified pushback response).
     - Ensure branch was pushed with any required updates.
     - Then move to `Human Review`.
